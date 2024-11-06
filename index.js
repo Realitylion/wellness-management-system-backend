@@ -184,6 +184,59 @@ app.post('/api/addFunFact', async (req, res) => {
     }
 });
 
+//get meal log
+// GET meal log by email ID
+app.get('/api/getMealLog', async (req, res) => {
+    try {
+        const { emailID } = req.query;
+
+        // Check if emailID is provided
+        if (!emailID) {
+            return res.status(400).json({ error: "Email ID is required" });
+        }
+
+        // Find meal logs by email ID
+        const mealLogs = await MealLog.find({ emailID: emailID });
+
+        // Respond with the meal logs
+        if (mealLogs.length > 0) {
+            res.status(200).json(mealLogs);
+        } else {
+            res.status(404).json({ message: "No meal logs found for this email ID" });
+        }
+    } catch (error) {
+        // Handle and respond to any errors
+        res.status(500).json({ error: error.message });
+    }
+});
+
+
+// post meal log
+app.post('/api/addMealLog', async (req, res) => {
+    try {
+        const { meal, calories, date, emailID } = req.body;
+
+        // Validate required fields
+        if (!meal || !calories || !date || !emailID) {
+            return res.status(400).json({ error: "All fields are required: meal, calories, date, emailID" });
+        }
+
+        // Create a new MealLog document
+        const newMealLog = new MealLog({
+            meal,
+            calories,
+            date: new Date(date), // Ensure date is in the correct format
+            emailID
+        });
+
+        // Save to database
+        await newMealLog.save();
+
+        res.status(201).json({ message: "Meal log created successfully", data: newMealLog });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
 
 mongoose.connect(process.env.MONGO_URI)
 .then(() => {
