@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
 
 const User = require('./models/user.model');
 const MealLog = require('./models/meallog.model');
+const FunFact = require('./models/funfact.model');
 
 port = process.env.PORT || 4000;
 
@@ -105,6 +106,39 @@ app.delete('/api/deleteUser', async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
+
+//getFunFact
+app.get('/api/getFunFact', async (req, res) => {
+    try {
+        // Use MongoDB's aggregation to get a random sample of 2 fun facts
+        const funFact = await FunFact.aggregate([{ $sample: { size: 2 } }]);
+
+        // Respond with the fun facts
+        res.status(200).json(funFact);
+    } catch (error) {
+        // Handle and respond to any errors
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Route to add a new fitness fun fact (POST request with JSON body)
+app.post('/api/addFunFact', async (req, res) => {
+    try {
+        const { fact } = req.body;
+
+        if (!fact) {
+            return res.status(400).json({ error: 'A fun fact is required' });
+        }
+
+        const newFunFact = new FunFact({ fact });
+        await newFunFact.save();
+
+        res.status(200).json({ message: 'Fun fact saved successfully', data: newFunFact });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 
 mongoose.connect(process.env.MONGO_URI)
 .then(() => {
