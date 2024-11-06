@@ -18,10 +18,12 @@ const mealLogSchema = new mongoose.Schema({
         type: Date,
         required: true
     },
-    user: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: true
+    emailID: {
+        type: String,
+        required: true,
+        trim: true,
+        minlength: 3,
+        maxlength: 255
     }
 });
 

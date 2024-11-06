@@ -53,6 +53,51 @@ app.get('/api/getUsers', async (req, res) => {
     }
 });
 
+//Genrate meal plane
+async function generateMealPlan(userPreferences) {
+    const response = await axios.post(
+        'https://api.openai.com/v1/chat/completions',
+        {
+            model: "gpt-3.5-turbo",
+            messages: [
+                { role: "system", content: "You are a helpful meal planning assistant." },
+                { role: "user", content: `Create a meal plan based on the following preferences: ${userPreferences}` }
+            ]
+        },
+        {
+            headers: {
+                'Authorization': `Bearer YOUR_OPENAI_API_KEY`,
+                'Content-Type': 'application/json'
+            }
+        }
+    );
+    return response.data.choices[0].message.content;
+}
+
+app.post('/api/gerateMealPlane', async (req, res) => {
+    try {
+        // Extract user preferences from the request body
+        const { userPreferences } = req.body;
+
+        // Call the function to generate the meal plan
+        //const mealPlan = await generateMealPlan(userPreferences);
+
+        // Send the meal plan as the response
+        res.json({
+            message: 'Meal plan generated successfully',
+            mealPlan: mealPlan
+        });
+    } catch (error) {
+        // Handle any errors that occur
+        console.error('Error generating meal plan:', error);
+        res.status(500).json({
+            message: 'An error occurred while generating the meal plan',
+            error: error.message
+        });
+    }
+});
+
+
 // update user by email
 app.put('/api/updateUser', async (req, res) => {
     try {
