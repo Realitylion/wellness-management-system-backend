@@ -1,24 +1,27 @@
 require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
+const axios = require('axios');
 
+// Import models
 const User = require('./models/user.model');
 const MealLog = require('./models/meallog.model');
-const FunFact = require('./models/funfact.model');
+const WellnessEntry = require('./models/wellnessEntry.model'); // New model for wellness entries
+const FunFact = require('./models/funfact.model'); // Model for fun facts
 
-port = process.env.PORT || 4000;
-
+const port = process.env.PORT || 4000;
 const app = express();
+
 app.use(express.json());
 
+// Root route for testing
 app.get('/', (req, res) => {
     res.send('Hello World!');
 });
 
-// create a new user
+// Create a new user
 app.post('/api/createUser', async (req, res) => {
     try {
-        // Validate and create a new user instance with the request data
         const user = new User({
             firstName: req.body.firstName,
             lastName: req.body.lastName,
@@ -29,32 +32,24 @@ app.post('/api/createUser', async (req, res) => {
             gender: req.body.gender
         });
 
-        // Save the user to the database
         const savedUser = await user.save();
-
-        // Respond with the newly created user
         res.status(201).json(savedUser);
     } catch (error) {
-        // Handle and respond to any errors
         res.status(500).json({ error: error.message });
     }
 });
 
-// get all users
+// Get all users
 app.get('/api/getUsers', async (req, res) => {
     try {
-        // Get all users from the database
         const users = await User.find();
-
-        // Respond with the users
         res.status(200).json(users);
     } catch (error) {
-        // Handle and respond to any errors
         res.status(500).json({ error: error.message });
     }
 });
 
-//Genrate meal plane
+// Generate meal plan
 async function generateMealPlan(userPreferences) {
     const response = await axios.post(
         'https://api.openai.com/v1/chat/completions',
@@ -75,21 +70,16 @@ async function generateMealPlan(userPreferences) {
     return response.data.choices[0].message.content;
 }
 
-app.post('/api/gerateMealPlane', async (req, res) => {
+app.post('/api/generateMealPlan', async (req, res) => {
     try {
-        // Extract user preferences from the request body
         const { userPreferences } = req.body;
+        const mealPlan = await generateMealPlan(userPreferences);
 
-        // Call the function to generate the meal plan
-        //const mealPlan = await generateMealPlan(userPreferences);
-
-        // Send the meal plan as the response
         res.json({
             message: 'Meal plan generated successfully',
             mealPlan: mealPlan
         });
     } catch (error) {
-        // Handle any errors that occur
         console.error('Error generating meal plan:', error);
         res.status(500).json({
             message: 'An error occurred while generating the meal plan',
@@ -98,100 +88,109 @@ app.post('/api/gerateMealPlane', async (req, res) => {
     }
 });
 
-
-// update user by email
+// Update user by email
 app.put('/api/updateUser', async (req, res) => {
     try {
-        // Find the user by email
         const user = await User.findOne({ email: req.body.email });
-
-        // If the user doesn't exist
         if (!user) {
             return res.status(404).json({ error: 'User not found' });
         }
 
-        // Update the user with the request data
-        try {
-            user.firstName = req.body.firstName;
-            user.lastName = req.body.lastName;
-            user.height = req.body.height;
-            user.weight = req.body.weight;
-            user.age = req.body.age;
-            user.gender = req.body.gender;
-        } catch (error) {
-            return res.status(400).json({ error: 'Invalid request data' });
-        }
+        user.firstName = req.body.firstName;
+        user.lastName = req.body.lastName;
+        user.height = req.body.height;
+        user.weight = req.body.weight;
+        user.age = req.body.age;
+        user.gender = req.body.gender;
 
-        // Save the updated user to the database
         const updatedUser = await user.save();
-
-        // Respond with the updated user
         res.status(200).json(updatedUser);
     } catch (error) {
-        // Handle and respond to any errors
         res.status(500).json({ error: error.message });
     }
 });
 
-// delete user by email
+// Delete user by email
 app.delete('/api/deleteUser', async (req, res) => {
     try {
-        // Find the user by email and delete it
         const deletedUser = await User.findOneAndDelete({ email: req.body.email });
-        
-        // If the user doesn't exist
         if (!deletedUser) {
             return res.status(404).json({ error: 'User not found' });
         }
 
-        // Respond with the deleted user
         res.status(200).json(deletedUser);
     } catch (error) {
-        // Handle and respond to any errors
         res.status(500).json({ error: error.message });
     }
 });
 
-//getFunFact
+// New GET request to fetch session history for a specific user
+app.get('/api/session/history/:userId', async (req, res) => {
+    try {
+        const userId = req.params.userId;
+        const sessions = await WellnessEntry.find({ user: userId });
+        res.status(200).json(sessions);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch session history' });
+    }
+});
+
+// POST request to create a wellness session entry
+app.post('/api/session/create', async (req, res) => {
+    try {
+        const { firstName, lastName, email, height, weight, age, gender } = req.body;
+        const newEntry = new WellnessEntry({
+            firstName,
+            lastName,
+            email,
+            height,
+            weight,
+            age,
+            gender,
+            date: Date.now()
+        });
+
+        const savedEntry = await newEntry.save();
+        res.status(201).json({ message: 'Wellness entry created successfully', entry: savedEntry });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to create wellness entry' });
+    }
+});
+
+// GET request to fetch a random fun fact
 app.get('/api/getFunFact', async (req, res) => {
     try {
-        // Use MongoDB's aggregation to get a random sample of 2 fun facts
         const funFact = await FunFact.aggregate([{ $sample: { size: 2 } }]);
-
-        // Respond with the fun facts
         res.status(200).json(funFact);
     } catch (error) {
-        // Handle and respond to any errors
         res.status(500).json({ error: error.message });
     }
 });
 
-// Route to add a new fitness fun fact (POST request with JSON body)
+// POST request to add a new fun fact
 app.post('/api/addFunFact', async (req, res) => {
     try {
         const { fact } = req.body;
-
         if (!fact) {
             return res.status(400).json({ error: 'A fun fact is required' });
         }
 
         const newFunFact = new FunFact({ fact });
         await newFunFact.save();
-
         res.status(200).json({ message: 'Fun fact saved successfully', data: newFunFact });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });
 
-
-mongoose.connect(process.env.MONGO_URI)
-.then(() => {
-    console.log('Connected to MongoDB');
-    app.listen(port, () => {
-    console.log('Server is running on port', port);
-});
-})
-.catch((err) => {
-    console.log('Error connecting to MongoDB', err);
-});
+// MongoDB connection
+mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+    .then(() => {
+        console.log('Connected to MongoDB');
+        app.listen(port, () => {
+            console.log('Server is running on port', port);
+        });
+    })
+    .catch((err) => {
+        console.log('Error connecting to MongoDB', err);
+    });
