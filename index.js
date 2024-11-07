@@ -22,15 +22,8 @@ app.post('/api/createUser', async (req, res) => {
         const user = new User({
             firstName: req.body.firstName,
             lastName: req.body.lastName,
-            phoneNumber: req.body.phoneNumber,
             email: req.body.email,
-            dob: req.body.dob,  // Date of birth
-            bloodGroup: req.body.bloodGroup,
-            height: req.body.height,
-            weight: req.body.weight,
-            healthIssuesOrAllergies: req.body.healthIssuesOrAllergies,
-            priorInjuries: req.body.priorInjuries,
-            gender: req.body.gender
+            profileCompleted: false,            
         });
 
         // Save the user to the database
@@ -38,6 +31,26 @@ app.post('/api/createUser', async (req, res) => {
 
         // Respond with the newly created user
         res.status(201).json(savedUser);
+    } catch (error) {
+        // Handle and respond to any errors
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// get user by email
+app.get('/api/getUser', async (req, res) => {
+    try {
+        // Find the user by email
+        const user = await User.findOne({ email:
+            req.query.email });
+
+        // If the user doesn't exist
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Respond with the user
+        res.status(200).json(user);
     } catch (error) {
         // Handle and respond to any errors
         res.status(500).json({ error: error.message });
@@ -58,7 +71,7 @@ app.get('/api/getUsers', async (req, res) => {
     }
 });
 
-//Genrate meal plane
+//Genrate meal plan
 async function generateMealPlan(userPreferences) {
     const response = await axios.post(
         'https://api.openai.com/v1/chat/completions',
@@ -118,7 +131,8 @@ app.put('/api/updateUser', async (req, res) => {
         if (req.body.firstName) user.firstName = req.body.firstName;
         if (req.body.lastName) user.lastName = req.body.lastName;
         if (req.body.phoneNumber) user.phoneNumber = req.body.phoneNumber;
-        if (req.body.dob) user.dob = req.body.dob;  // Use dob instead of age
+        if (req.body.profileCompleted) user.profileCompleted = req.body.profileCompleted;
+        if (req.body.dob) user.dob = req.body.dob; 
         if (req.body.bloodGroup) user.bloodGroup = req.body.bloodGroup;
         if (req.body.height) user.height = req.body.height;
         if (req.body.weight) user.weight = req.body.weight;
