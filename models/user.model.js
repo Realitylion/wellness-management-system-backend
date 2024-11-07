@@ -15,6 +15,13 @@ const userSchema = new mongoose.Schema({
         minlength: 3,
         maxlength: 50
     },
+    phoneNumber: {
+        type: String,
+        required: true,
+        trim: true,
+        minlength: 10,
+        maxlength: 15
+    },
     email: {
         type: String,
         required: true,
@@ -22,6 +29,16 @@ const userSchema = new mongoose.Schema({
         trim: true,
         minlength: 5,
         maxlength: 255
+    },
+    dob: {
+        type: Date,
+        required: true
+    },
+    bloodGroup: {
+        type: String,
+        required: false,
+        trim: true,
+        enum: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
     },
     height: {
         type: mongoose.Types.Decimal128,
@@ -35,11 +52,17 @@ const userSchema = new mongoose.Schema({
         min: 1,
         max: 1000
     },
-    age: {
-        type: Number,
-        required: true,
-        min: 1,
-        max: 150
+    healthIssuesOrAllergies: {
+        type: String,
+        required: false,
+        trim: true,
+        maxlength: 255
+    },
+    priorInjuries: {
+        type: String,
+        required: false,
+        trim: true,
+        maxlength: 255
     },
     gender: {
         type: String,

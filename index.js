@@ -22,10 +22,14 @@ app.post('/api/createUser', async (req, res) => {
         const user = new User({
             firstName: req.body.firstName,
             lastName: req.body.lastName,
+            phoneNumber: req.body.phoneNumber,
             email: req.body.email,
+            dob: req.body.dob,  // Date of birth
+            bloodGroup: req.body.bloodGroup,
             height: req.body.height,
             weight: req.body.weight,
-            age: req.body.age,
+            healthIssuesOrAllergies: req.body.healthIssuesOrAllergies,
+            priorInjuries: req.body.priorInjuries,
             gender: req.body.gender
         });
 
@@ -110,17 +114,17 @@ app.put('/api/updateUser', async (req, res) => {
             return res.status(404).json({ error: 'User not found' });
         }
 
-        // Update the user with the request data
-        try {
-            user.firstName = req.body.firstName;
-            user.lastName = req.body.lastName;
-            user.height = req.body.height;
-            user.weight = req.body.weight;
-            user.age = req.body.age;
-            user.gender = req.body.gender;
-        } catch (error) {
-            return res.status(400).json({ error: 'Invalid request data' });
-        }
+        // Update only fields provided in the request data
+        if (req.body.firstName) user.firstName = req.body.firstName;
+        if (req.body.lastName) user.lastName = req.body.lastName;
+        if (req.body.phoneNumber) user.phoneNumber = req.body.phoneNumber;
+        if (req.body.dob) user.dob = req.body.dob;  // Use dob instead of age
+        if (req.body.bloodGroup) user.bloodGroup = req.body.bloodGroup;
+        if (req.body.height) user.height = req.body.height;
+        if (req.body.weight) user.weight = req.body.weight;
+        if (req.body.healthIssuesOrAllergies) user.healthIssuesOrAllergies = req.body.healthIssuesOrAllergies;
+        if (req.body.priorInjuries) user.priorInjuries = req.body.priorInjuries;
+        if (req.body.gender) user.gender = req.body.gender;
 
         // Save the updated user to the database
         const updatedUser = await user.save();
