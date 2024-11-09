@@ -7,4 +7,5 @@ const funFactSchema = new mongoose.Schema({
   }
 });
 
-module.exports = mongoose.model('FunFact', funFactSchema);
+const FunFact = mongoose.model('FunFact', funFactSchema);
+module.exports = FunFact;

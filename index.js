@@ -6,6 +6,7 @@ const cors = require("cors");
 const User = require('./models/user.model');
 const MealLog = require('./models/meallog.model');
 const FunFact = require('./models/funfact.model');
+const WellnessSession = require('./models/wellness.model');
 
 port = process.env.PORT || 4000;
 
@@ -76,51 +77,6 @@ app.get('/api/getUsers', async (req, res) => {
     }
 });
 
-//Genrate meal plan
-async function generateMealPlan(userPreferences) {
-    const response = await axios.post(
-        'https://api.openai.com/v1/chat/completions',
-        {
-            model: "gpt-3.5-turbo",
-            messages: [
-                { role: "system", content: "You are a helpful meal planning assistant." },
-                { role: "user", content: `Create a meal plan based on the following preferences: ${userPreferences}` }
-            ]
-        },
-        {
-            headers: {
-                'Authorization': `Bearer YOUR_OPENAI_API_KEY`,
-                'Content-Type': 'application/json'
-            }
-        }
-    );
-    return response.data.choices[0].message.content;
-}
-
-app.post('/api/gerateMealPlane', async (req, res) => {
-    try {
-        // Extract user preferences from the request body
-        const { userPreferences } = req.body;
-
-        // Call the function to generate the meal plan
-        //const mealPlan = await generateMealPlan(userPreferences);
-
-        // Send the meal plan as the response
-        res.json({
-            message: 'Meal plan generated successfully',
-            mealPlan: mealPlan
-        });
-    } catch (error) {
-        // Handle any errors that occur
-        console.error('Error generating meal plan:', error);
-        res.status(500).json({
-            message: 'An error occurred while generating the meal plan',
-            error: error.message
-        });
-    }
-});
-
-
 // update user by email
 app.put('/api/updateUser', async (req, res) => {
     try {
@@ -175,7 +131,7 @@ app.delete('/api/deleteUser', async (req, res) => {
     }
 });
 
-//getFunFact
+// get fun facts
 app.get('/api/getFunFact', async (req, res) => {
     try {
         // Use MongoDB's aggregation to get a random sample of 2 fun facts
@@ -207,7 +163,49 @@ app.post('/api/addFunFact', async (req, res) => {
     }
 });
 
-//get meal log
+// Generate meal plan
+async function generateMealPlan(userPreferences) {
+    const response = await axios.post(
+        'https://api.openai.com/v1/chat/completions',
+        {
+            model: "gpt-3.5-turbo",
+            messages: [
+                { role: "system", content: "You are a helpful meal planning assistant." },
+                { role: "user", content: `Create a meal plan based on the following preferences: ${userPreferences}` }
+            ]
+        },
+        {
+            headers: {
+                'Authorization': `Bearer YOUR_OPENAI_API_KEY`,
+                'Content-Type': 'application/json'
+            }
+        }
+    );
+    return response.data.choices[0].message.content;
+}
+app.post('/api/gerateMealPlane', async (req, res) => {
+    try {
+        // Extract user preferences from the request body
+        const { userPreferences } = req.body;
+
+        // Call the function to generate the meal plan
+        //const mealPlan = await generateMealPlan(userPreferences);
+
+        // Send the meal plan as the response
+        res.json({
+            message: 'Meal plan generated successfully',
+            mealPlan: mealPlan
+        });
+    } catch (error) {
+        // Handle any errors that occur
+        console.error('Error generating meal plan:', error);
+        res.status(500).json({
+            message: 'An error occurred while generating the meal plan',
+            error: error.message
+        });
+    }
+});
+
 // GET meal log by email ID
 app.get('/api/getMealLog', async (req, res) => {
     try {
@@ -233,7 +231,6 @@ app.get('/api/getMealLog', async (req, res) => {
     }
 });
 
-
 // post meal log
 app.post('/api/addMealLog', async (req, res) => {
     try {
@@ -257,6 +254,79 @@ app.post('/api/addMealLog', async (req, res) => {
 
         res.status(201).json({ message: "Meal log created successfully", data: newMealLog });
     } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// get media by wellness session type
+app.get('/api/getMediaByWellnessType', async (req, res) => {
+    try {
+        // Find the media by wellness session type
+        const wellnessSession = await WellnessSession.findAll({ sessionType: req.query.sessionType });
+
+        // If the media doesn't exist
+        if (!wellnessSession) {
+            return res.status(404).json({ error: 'Media not found' });
+        }
+
+        // Respond with the media
+        res.status(200).json(wellnessSession);
+    } catch (error) {
+        // Handle and respond to any errors
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// post wellness session
+app.post('/api/addWellnessSession', async (req, res) => {
+    try {
+        const { sessionType, meditationVideo, audioFile, duration, sessionDate, email } = req.body;
+
+        // Validate required fields
+        if (!sessionType || !duration || !sessionDate || !email) {
+            return res.status(400).json({ error: "All fields are required: sessionType, duration, sessionDate, email" });
+        }
+
+        // Create a new WellnessSession document
+        const newWellnessSession = new WellnessSession({
+            sessionType,
+            meditationVideo,
+            audioFile,
+            duration,
+            sessionDate,
+            email
+        });
+
+        // Save to database
+        await newWellnessSession.save();
+
+        res.status(201).json({ message: "Wellness session created successfully", data: newWellnessSession });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// get wellness session by email ID
+app.get('/api/getWellnessSession', async (req, res) => {
+    try {
+        const { email } = req.query;
+
+        // Check if email is provided
+        if (!email) {
+            return res.status(400).json({ error: "Email is required" });
+        }
+
+        // Find wellness sessions by email ID
+        const wellnessSessions = await WellnessSession.find({ email: email });
+
+        // Respond with the wellness sessions
+        if (wellnessSessions.length > 0) {
+            res.status(200).json(wellnessSessions);
+        } else {
+            res.status(404).json({ message: "No wellness sessions found for this email" });
+        }
+    } catch (error) {
+        // Handle and respond to any errors
         res.status(500).json({ error: error.message });
     }
 });

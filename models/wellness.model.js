@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const wellnessSessionSchema = new mongoose.Schema({
     sessionType: {
         type: String,
-        enum: ['Yoga', 'Meditation', 'Self-Acceptance'], // Specific session types
+        enum: ['Yoga', 'Meditation', 'Self-Acceptance', 'Jog', 'Cardio Dance', 'Therapy Music'], // Specific session types
         required: true,
         trim: true
     },
