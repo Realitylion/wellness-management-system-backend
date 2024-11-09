@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
+const cors = require("cors");
 
 const User = require('./models/user.model');
 const MealLog = require('./models/meallog.model');
@@ -10,6 +11,7 @@ port = process.env.PORT || 4000;
 
 const app = express();
 app.use(express.json());
+app.use(cors());
 
 app.get('/', (req, res) => {
     res.send('Hello World!');
@@ -19,6 +21,9 @@ app.get('/', (req, res) => {
 app.post('/api/createUser', async (req, res) => {
     try {
         // Validate and create a new user instance with the request data
+        if (req.body.lastName === "") {
+            req.body.lastName = null;
+        }
         const user = new User({
             firstName: req.body.firstName,
             lastName: req.body.lastName,
