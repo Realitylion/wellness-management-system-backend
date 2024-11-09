@@ -7,18 +7,8 @@ const wellnessSessionSchema = new mongoose.Schema({
         required: true,
         trim: true
     },
-    meditationVideo: {
-        type: String, // Path or URL to the meditation video file
-        trim: true,
-        required: function() { return this.sessionType === 'Meditation'; } // Required if session type is Meditation
-    },
-    audioFile: {
-        type: String, // Path or URL to the audio file
-        trim: true,
-        required: function() { return this.sessionType !== 'Meditation'; } // Required if session type is not Meditation
-    },
     duration: {
-        type: Number, // Duration in minutes or seconds
+        type: Number, // Duration in number of minutes
         required: true,
         min: 1
     },

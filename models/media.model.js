@@ -1,7 +1,13 @@
 const mongoose = require('mongoose');
 
 const mediaSchema = new mongoose.Schema({
-    type: {
+    title: {
+        type: String,
+        unique: true,
+        required: true,
+        trim: true
+    },
+    mediaType: {
         type: String,
         required: true,
         enum: ['Video', 'Audio'],

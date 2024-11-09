@@ -7,6 +7,7 @@ const User = require('./models/user.model');
 const MealLog = require('./models/meallog.model');
 const FunFact = require('./models/funfact.model');
 const WellnessSession = require('./models/wellness.model');
+const Media = require('./models/media.model');
 
 port = process.env.PORT || 4000;
 
@@ -262,15 +263,82 @@ app.post('/api/addMealLog', async (req, res) => {
 app.get('/api/getMediaByWellnessType', async (req, res) => {
     try {
         // Find the media by wellness session type
-        const wellnessSession = await WellnessSession.findAll({ sessionType: req.query.sessionType });
+        const media = await Media.find({ sessionType: req.query.sessionType });
 
         // If the media doesn't exist
-        if (!wellnessSession) {
+        if (!media) {
             return res.status(404).json({ error: 'Media not found' });
         }
 
         // Respond with the media
-        res.status(200).json(wellnessSession);
+        res.status(200).json(media);
+    } catch (error) {
+        // Handle and respond to any errors
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// get all media
+app.get('/api/getMedia', async (req, res) => {
+    try {
+        // Get all media from the database
+        const media = await Media.find();
+
+        // Respond with the media
+        res.status(200).json(media);
+    } catch (error) {
+        // Handle and respond to any errors
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// post media
+app.post('/api/addMedia', async (req, res) => {
+    try {
+        const { title, sessionType, mediaType, url } = req.body;
+
+        // Validate required fields
+        if (!title || !sessionType || !mediaType || !url) {
+            return res.status(400).json({ error: "All fields are required: title, sessionType, mediaType, url" });
+        }
+
+        // check if title already exists
+        const existingMedia = await Media.findOne({ title });
+
+        if (existingMedia) {
+            return res.status(400).json({ error: "Media with this title already exists" });
+        }
+
+        // Create a new Media document
+        const newMedia = new Media({
+            title,
+            sessionType,
+            mediaType,
+            url
+        });
+
+        // Save to database
+        await newMedia.save();
+
+        res.status(201).json({ message: "Media created successfully", data: newMedia });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// delete media by title
+app.delete('/api/deleteMedia', async (req, res) => {
+    try {
+        // Find the media by title and delete it
+        const deletedMedia = await Media.findOneAndDelete({ title: req.body.title });
+
+        // If the media doesn't exist
+        if (!deletedMedia) {
+            return res.status(404).json({ error: 'Media not found' });
+        }
+
+        // Respond with the deleted media
+        res.status(200).json(deletedMedia);
     } catch (error) {
         // Handle and respond to any errors
         res.status(500).json({ error: error.message });
@@ -280,18 +348,23 @@ app.get('/api/getMediaByWellnessType', async (req, res) => {
 // post wellness session
 app.post('/api/addWellnessSession', async (req, res) => {
     try {
-        const { sessionType, meditationVideo, audioFile, duration, sessionDate, email } = req.body;
+        const { sessionType, duration, sessionDate, email } = req.body;
 
         // Validate required fields
         if (!sessionType || !duration || !sessionDate || !email) {
             return res.status(400).json({ error: "All fields are required: sessionType, duration, sessionDate, email" });
         }
 
+        // Check if email belongs to an existing user
+        const existingUser = await User.findOne({ email: email });
+
+        if (!existingUser) {
+            return res.status(404).json({ error: "User with this email does not exist" });
+        }
+
         // Create a new WellnessSession document
         const newWellnessSession = new WellnessSession({
             sessionType,
-            meditationVideo,
-            audioFile,
             duration,
             sessionDate,
             email
@@ -314,6 +387,13 @@ app.get('/api/getWellnessSession', async (req, res) => {
         // Check if email is provided
         if (!email) {
             return res.status(400).json({ error: "Email is required" });
+        }
+
+        // Check if email belongs to an existing user
+        const existingUser = await User.findOne({ email: email });
+
+        if (!existingUser) {
+            return res.status(404).json({ error: "User with this email does not exist" });
         }
 
         // Find wellness sessions by email ID
