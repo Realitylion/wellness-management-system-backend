@@ -220,6 +220,17 @@ app.get('/api/getMealLog', async (req, res) => {
         // Find meal logs by email ID
         const mealLogs = await MealLog.find({ emailID: emailID });
 
+        // order by date in descending order, then order as dinner, lunch, breakfast
+        mealLogs.sort((a, b) => {
+            // First, compare dates in descending order
+            const dateComparison = new Date(b.date) - new Date(a.date);
+            if (dateComparison !== 0) return dateComparison;
+        
+            // If dates are the same, order by meal type
+            const mealOrder = { dinner: 1, lunch: 2, breakfast: 3 };
+            return (mealOrder[a.meal] || 4) - (mealOrder[b.meal] || 4);
+        });
+
         // Respond with the meal logs
         if (mealLogs.length > 0) {
             res.status(200).json(mealLogs);
@@ -255,6 +266,28 @@ app.post('/api/addMealLog', async (req, res) => {
 
         res.status(201).json({ message: "Meal log created successfully", data: newMealLog });
     } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// delete meal log by ID
+app.delete('/api/deleteMealLog', async (req, res) => {
+    try {
+        // get mealLogID from request body
+        const { mealLogID } = req.body
+
+        // Find the meal log by ID and delete it
+        const deletedMealLog = await MealLog.findByIdAndDelete(mealLogID);
+
+        // If the meal log doesn't exist
+        if (!deletedMealLog) {
+            return res.status(404).json({ error: 'Meal log not found' });
+        }
+
+        // Respond with the deleted meal log
+        res.status(200).json(deletedMealLog);
+    } catch (error) {
+        // Handle and respond to any errors
         res.status(500).json({ error: error.message });
     }
 });

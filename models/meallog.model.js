@@ -4,6 +4,7 @@ const mealLogSchema = new mongoose.Schema({
     meal: {
         type: String,
         required: true,
+        enum: ['Breakfast', 'Lunch', 'Dinner', 'Snack'],
         trim: true,
         minlength: 3,
         maxlength: 255
