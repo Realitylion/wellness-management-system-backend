@@ -54,33 +54,60 @@ app.get('/api/getUsers', async (req, res) => {
 });
 
 //Genrate meal plane
-async function generateMealPlan(userPreferences) {
-    const response = await axios.post(
-        'https://api.openai.com/v1/chat/completions',
-        {
-            model: "gpt-3.5-turbo",
-            messages: [
-                { role: "system", content: "You are a helpful meal planning assistant." },
-                { role: "user", content: `Create a meal plan based on the following preferences: ${userPreferences}` }
-            ]
-        },
-        {
-            headers: {
-                'Authorization': `Bearer YOUR_OPENAI_API_KEY`,
-                'Content-Type': 'application/json'
-            }
-        }
-    );
-    return response.data.choices[0].message.content;
+const mealRecipes = [
+    `Grilled Chicken Salad:
+    Ingredients: 1 grilled chicken breast (sliced), 2 cups mixed greens, 1/2 avocado (sliced), 1/4 cup cherry tomatoes (halved), 2 tbsp balsamic vinaigrette
+    Steps: Grill the chicken breast until fully cooked, then slice it. Arrange mixed greens on a plate and top with avocado slices and cherry tomatoes. Place the sliced chicken on top and drizzle with balsamic vinaigrette.
+    Timing: 20 minutes
+    Calories: 350 kcal`,
+
+    `Quinoa Bowl with Roasted Vegetables:
+    Ingredients: 1 cup cooked quinoa, 1/2 cup roasted vegetables (bell peppers, zucchini, carrots), 1/4 cup chickpeas, 1 tbsp tahini, Salt and pepper to taste
+    Steps: Prepare quinoa according to package instructions. Roast the vegetables with a drizzle of olive oil, salt, and pepper at 400°F (200°C) for 20 minutes. Place the quinoa in a bowl, add the roasted vegetables and chickpeas, and drizzle with tahini.
+    Timing: 25 minutes
+    Calories: 400 kcal`,
+
+    `Vegetable Stir-Fry with Tofu:
+    Ingredients: 1 cup firm tofu (cubed), 1 cup mixed vegetables (broccoli, bell peppers, carrots), 1 tbsp soy sauce, 1 tbsp olive oil, 1/2 cup cooked brown rice
+    Steps: Heat olive oil in a pan and add the tofu cubes. Stir-fry until golden brown. Add mixed vegetables and cook until tender-crisp. Pour soy sauce over the stir-fry and serve over cooked brown rice.
+    Timing: 15 minutes
+    Calories: 350 kcal`,
+
+    `Greek Yogurt with Berries and Almonds:
+    Ingredients: 1 cup Greek yogurt, 1/2 cup mixed berries (strawberries, blueberries, raspberries), 1 tsp honey, 2 tbsp almonds (chopped)
+    Steps: Spoon Greek yogurt into a bowl. Top with berries, honey, and chopped almonds.
+    Timing: 5 minutes
+    Calories: 200 kcal`,
+
+    `Baked Salmon with Asparagus:
+    Ingredients: 1 salmon fillet, 1 cup asparagus spears, 1 tbsp olive oil, Salt and pepper to taste, 1 lemon slice
+    Steps: Preheat oven to 400°F (200°C). Place salmon and asparagus on a baking sheet. Drizzle with olive oil, and season with salt and pepper. Bake for 15 minutes, or until the salmon flakes easily with a fork. Garnish with a lemon slice.
+    Timing: 20 minutes
+    Calories: 300 kcal`,
+
+    `Vegetarian Chili with Beans and Quinoa:
+    Ingredients: 1 cup kidney beans (cooked), 1 cup black beans (cooked), 1/2 cup quinoa (cooked), 1 cup diced tomatoes, 1 tbsp chili powder, 1 tsp cumin, Salt and pepper to taste
+    Steps: In a pot, combine beans, quinoa, and diced tomatoes. Add chili powder, cumin, salt, and pepper, then simmer for 10 minutes. Serve warm, garnished with fresh herbs if desired.
+    Timing: 20 minutes
+    Calories: 400 kcal`,
+
+    `Egg White Omelette with Spinach and Feta:
+    Ingredients: 4 egg whites, 1/2 cup fresh spinach, 2 tbsp feta cheese (crumbled), Salt and pepper to taste, 1 tsp olive oil
+    Steps: In a pan, heat olive oil over medium heat. Add spinach and cook until wilted. Pour egg whites over the spinach, season with salt and pepper, and sprinkle with feta. Cook until the eggs are set, then fold the omelette in half and serve.
+    Timing: 10 minutes
+    Calories: 150 kcal`,
+];
+
+function generateRandomMealPlan() {
+    // Select a random meal plan from the list of recipes
+    const randomIndex = Math.floor(Math.random() * mealRecipes.length);
+    return mealRecipes[randomIndex];
 }
 
-app.post('/api/gerateMealPlane', async (req, res) => {
+app.post('/api/generateMealPlan', (req, res) => {
     try {
-        // Extract user preferences from the request body
-        const { userPreferences } = req.body;
-
-        // Call the function to generate the meal plan
-        //const mealPlan = await generateMealPlan(userPreferences);
+        // Generate a random meal plan
+        const mealPlan = generateRandomMealPlan();
 
         // Send the meal plan as the response
         res.json({
